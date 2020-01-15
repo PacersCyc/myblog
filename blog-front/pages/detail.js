@@ -1,48 +1,34 @@
 import React from 'react'
+import axios from 'axios'
+import marked from 'marked'
+import hljs from 'highlight.js'
 import Head from 'next/head'
-import ReactMarkdown from 'react-markdown'
 import { Row, Col, Icon, Breadcrumb } from 'antd'
 import Header from '../components/Header'
 import Author from '../components/Author'
 import Footer from '../components/Footer'
+import servicePath from '../config/apiUrl'
 import '../static/style/pages/detail.scss'
+import 'highlight.js/styles/monokai-sublime.css' // 引入特定主题的highlight样式文件
 
-let markdown = '# P01:课程介绍和环境搭建\n' +
-  '[ **M** ] arkdown + E [ **ditor** ] = **Mditor**  \n' +
-  '> Mditor 是一个简洁、易于集成、方便扩展、期望舒服的编写 markdown 的编辑器，仅此而已... \n\n' +
-  '**这是加粗的文字**\n\n' +
-  '*这是倾斜的文字*`\n\n' +
-  '***这是斜体加粗的文字***\n\n' +
-  '~~这是加删除线的文字~~ \n\n' +
-  '\`console.log(111)\` \n\n' +
-  '# p02:来个Hello World 初始Vue3.0\n' +
-  '> aaaaaaaaa\n' +
-  '>> bbbbbbbbb\n' +
-  '>>> cccccccccc\n' +
-  '***\n\n\n' +
-  '# p03:Vue3.0基础知识讲解\n' +
-  '> aaaaaaaaa\n' +
-  '>> bbbbbbbbb\n' +
-  '>>> cccccccccc\n\n' +
-  '# p04:Vue3.0基础知识讲解\n' +
-  '> aaaaaaaaa\n' +
-  '>> bbbbbbbbb\n' +
-  '>>> cccccccccc\n\n' +
-  '#5 p05:Vue3.0基础知识讲解\n' +
-  '> aaaaaaaaa\n' +
-  '>> bbbbbbbbb\n' +
-  '>>> cccccccccc\n\n' +
-  '# p06:Vue3.0基础知识讲解\n' +
-  '> aaaaaaaaa\n' +
-  '>> bbbbbbbbb\n' +
-  '>>> cccccccccc\n\n' +
-  '# p07:Vue3.0基础知识讲解\n' +
-  '> aaaaaaaaa\n' +
-  '>> bbbbbbbbb\n' +
-  '>>> cccccccccc\n\n' +
-  '``` var a=11; ```'
+const Detail = (props) => {
+  const renderer = new marked.Renderer()
+  marked.setOptions({
+    renderer,
+    gfm: true,
+    pedantic: false,
+    sanitize: false,
+    tables: true,
+    breaks: false,
+    smartLists: true,
+    highlight: (code) => {
+      return hljs.highlightAuto(code).value
+    }
+  })
 
-const Detail = () => {
+  let html = marked(props.article_content)
+  const { title, view_count, create_time } = props
+
   return (
     <div>
       <Head>
@@ -63,24 +49,29 @@ const Detail = () => {
               </Breadcrumb>
             </div>
             <div>
-              <div className="detail-title">egg+next开发个人博客</div>
+              <div className="detail-title">{title}</div>
               <div className="list-icon center">
-                <span><Icon type="calendar" /> 2020-01-01</span>
-                <span><Icon type="fire" /> 2033</span>
+                <span><Icon type="calendar" /> {create_time}</span>
+                <span><Icon type="fire" /> {view_count}</span>
               </div>
             </div>
-            <div className="detail-content">
-              <ReactMarkdown
-                source={markdown}
-                escapeHtml={false}
-              />
-            </div>
+            <div className="detail-content" dangerouslySetInnerHTML={{ __html: html }}></div>
           </div>
         </Col>
       </Row>
       <Footer />
     </div>
   )
+}
+
+Detail.getInitialProps = async (ctx) => {
+  let id = ctx.query.id
+  const promise = new Promise((resolve, reject) => {
+    axios(`${servicePath.getArticleDetail}${id}`).then(res => {
+      resolve(res.data.data[0])
+    })
+  })
+  return await promise
 }
 
 export default Detail
